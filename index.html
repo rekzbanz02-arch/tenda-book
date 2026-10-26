@@ -81,14 +81,17 @@
   }
   header#storeHeader h1 { font-size: clamp(20px, 6vw, 32px); letter-spacing: -0.3px; }
   #storeAppSubtitle { font-size: 12px; font-weight: 600; letter-spacing: 1px; opacity: 0.85; margin-top: 2px; text-transform: uppercase; }
-  #settingsBtn {
+  #settingsBtn, #calcBtn {
     position: absolute; top: 14px; right: 14px;
     background: rgba(255,255,255,0.16); border: none; color: var(--paper);
     width: 38px; height: 38px; border-radius: 50%; font-size: 18px; cursor: pointer;
     transition: background 0.15s ease, transform 0.08s ease;
   }
-  #settingsBtn:hover { background: rgba(255,255,255,0.3); }
-  #settingsBtn:active:not(:disabled) { transform: scale(0.92); }
+  #settingsBtn:hover, #calcBtn:hover { background: rgba(255,255,255,0.3); }
+  #settingsBtn:active:not(:disabled), #calcBtn:active:not(:disabled) { transform: scale(0.92); }
+  #calcBtn { right: auto; left: 14px; }
+  #calcBtn { display: flex; align-items: center; justify-content: center; padding: 0; }
+  #calcBtn svg { display: block; pointer-events: none; }
 
   /* ---------- Marquee ---------- */
   #marqueeWrap {
@@ -290,6 +293,36 @@
 
   .empty-state { text-align: center; color: var(--muted); font-style: italic; padding: 30px 0; width: 100%; }
 
+  /* ---------- Store calculator ---------- */
+  .calc-box { max-height: 94vh; overflow-y: auto; padding: 18px; }
+  .calc-modes { display: flex; gap: 6px; background: var(--concrete); padding: 4px; border-radius: var(--radius); margin-bottom: 12px; }
+  .calc-mode-btn { flex: 1; padding: 9px 6px; border: none; border-radius: 9px; background: transparent; font-weight: 700; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .calc-mode-btn.active { background: var(--paper); color: var(--ink); box-shadow: var(--shadow-1); }
+  .calc-display { background: var(--ink); color: #fff; border-radius: var(--radius); padding: 12px 14px; text-align: right; min-height: 92px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; overflow: hidden; }
+  .calc-expr { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; color: #B8C0CC; word-break: break-all; min-height: 26px; }
+  .calc-result { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; color: var(--yellow); word-break: break-all; min-height: 40px; }
+  .calc-result.err { font-size: 18px; color: #FCA5A5; }
+  .calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 4px; }
+  .calc-key { height: 54px; padding: 0; font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; border-radius: var(--radius); background: var(--paper); color: var(--ink); border: 1.5px solid var(--line); cursor: pointer; }
+  .calc-key.fn { background: var(--concrete); }
+  .calc-key.op { background: #FEF3C7; border-color: #FCD34D; color: var(--amber); }
+  .calc-key.eq { background: var(--green); border-color: var(--green); color: #fff; grid-row: span 2; height: auto; font-size: 17px; line-height: 1.2; box-shadow: var(--shadow-colored-green); }
+  .calc-key.zero { grid-column: span 2; }
+  .calc-box .talk-btn { margin: 4px 0 0; padding: 14px; }
+  .calc-box .tab-hint { margin: 8px 0 10px; text-align: center; }
+  .calc-box .listening-status { margin: 0 0 6px; }
+  #changeClearBtn { margin-top: 10px; }
+  .quick-cash { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+  .quick-cash button { padding: 10px 0; border-radius: 10px; border: 1.5px solid var(--line); background: var(--concrete); font-weight: 700; font-size: 14px; color: var(--ink); cursor: pointer; }
+  .quick-cash button.exact { grid-column: span 2; background: #FEF3C7; border-color: #FCD34D; color: var(--amber); }
+  .change-output { background: var(--concrete); border: 2px solid var(--line); border-radius: var(--radius); padding: 12px 14px; text-align: center; margin-bottom: 6px; }
+  .change-output span { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .change-output strong { display: block; font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 700; color: var(--ink); }
+  .change-output.ok { background: #DCFCE7; border-color: var(--green); }
+  .change-output.ok strong, .change-output.ok span { color: var(--green); }
+  .change-output.short { background: #FEE2E2; border-color: var(--red); }
+  .change-output.short strong, .change-output.short span { color: var(--red); }
+
   /* ---------- Modals ---------- */
   .modal {
     position: fixed; inset: 0; background: rgba(0,0,0,0.6);
@@ -342,6 +375,9 @@
 <body>
 
 <header id="storeHeader">
+  <button id="calcBtn" aria-label="Store calculator">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><rect x="7.6" y="5.3" width="8.8" height="5.6" rx="1"/><text x="12" y="9.9" text-anchor="middle" font-size="6.6" font-weight="500" fill="currentColor" stroke="none">₱</text><g fill="currentColor" stroke="none"><circle cx="9" cy="14.4" r=".95"/><circle cx="12" cy="14.4" r=".95"/><circle cx="15" cy="14.4" r=".95"/><circle cx="9" cy="18" r=".95"/><circle cx="12" cy="18" r=".95"/><circle cx="15" cy="18" r=".95"/></g></svg>
+  </button>
   <button id="settingsBtn" aria-label="Store settings">⚙️</button>
   <h1 id="storeNameDisplay">Loading…</h1>
   <p id="storeAppSubtitle">TendaBook</p>
@@ -569,6 +605,81 @@
     <div class="modal-actions">
       <button id="settingsSaveBtn" class="primary-btn">Save</button>
       <button id="settingsCancelBtn" class="secondary-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Store Calculator Modal -->
+<div id="calcModal" class="modal" hidden>
+  <div class="modal-box calc-box">
+    <h3>🧮 Store Calculator</h3>
+    <div class="calc-modes">
+      <button class="calc-mode-btn active" data-mode="calc">🔢 Calculator</button>
+      <button class="calc-mode-btn" data-mode="change">💵 Change</button>
+    </div>
+
+    <!-- Mode 1: free calculator with voice -->
+    <div id="calcPanel">
+      <div class="calc-display" aria-live="polite">
+        <div id="calcExpr" class="calc-expr">0</div>
+        <div id="calcResult" class="calc-result"></div>
+      </div>
+      <div id="calcKeys" class="calc-keys">
+        <button class="calc-key fn" data-key="C">C</button>
+        <button class="calc-key fn" data-key="back" aria-label="Backspace">⌫</button>
+        <button class="calc-key op" data-key="/">÷</button>
+        <button class="calc-key op" data-key="*">×</button>
+        <button class="calc-key" data-key="7">7</button>
+        <button class="calc-key" data-key="8">8</button>
+        <button class="calc-key" data-key="9">9</button>
+        <button class="calc-key op" data-key="-">−</button>
+        <button class="calc-key" data-key="4">4</button>
+        <button class="calc-key" data-key="5">5</button>
+        <button class="calc-key" data-key="6">6</button>
+        <button class="calc-key op" data-key="+">+</button>
+        <button class="calc-key" data-key="1">1</button>
+        <button class="calc-key" data-key="2">2</button>
+        <button class="calc-key" data-key="3">3</button>
+        <button class="calc-key eq" data-key="=">=<br>Answer</button>
+        <button class="calc-key zero" data-key="0">0</button>
+        <button class="calc-key" data-key=".">.</button>
+      </div>
+      <p class="tab-hint">Hold the mic and say <em>"100 minus 35"</em>, then tap <strong>Answer</strong>.</p>
+      <p id="calcListeningStatus" class="listening-status" hidden>Listening…</p>
+      <button id="calcTalkBtn" class="talk-btn">🎙️ Hold to Talk</button>
+    </div>
+
+    <!-- Mode 2: customer change -->
+    <div id="changePanel" hidden>
+      <div class="field-row">
+        <label for="changeTotal">Total to pay (₱)</label>
+        <input type="text" id="changeTotal" inputmode="decimal" placeholder="0.00" autocomplete="off" />
+      </div>
+      <div class="field-row">
+        <label for="changeCash">Cash received (₱)</label>
+        <input type="text" id="changeCash" inputmode="decimal" placeholder="0.00" autocomplete="off" />
+      </div>
+      <div class="quick-cash" id="quickCash">
+        <button data-cash="20">₱20</button>
+        <button data-cash="50">₱50</button>
+        <button data-cash="100">₱100</button>
+        <button data-cash="200">₱200</button>
+        <button data-cash="500">₱500</button>
+        <button data-cash="1000">₱1000</button>
+        <button data-cash="exact" class="exact">Exact amount</button>
+      </div>
+      <div id="changeOutput" class="change-output">
+        <span id="changeLabel">Change</span>
+        <strong id="changeAmount">₱0.00</strong>
+      </div>
+      <button id="changeClearBtn" class="secondary-btn" style="width:100%">Clear</button>
+      <p class="tab-hint">Say <em>"total 35 cash 100"</em>, or just <em>"cash 100"</em> if the total is already filled. Items added with <strong>⋮ → Add to total</strong> land in the total.</p>
+      <p id="changeListeningStatus" class="listening-status" hidden>Listening…</p>
+      <button id="changeTalkBtn" class="talk-btn">🎙️ Hold to Talk</button>
+    </div>
+
+    <div class="modal-actions">
+      <button id="calcCloseBtn" class="secondary-btn">Close</button>
     </div>
   </div>
 </div>
@@ -929,6 +1040,10 @@ function applyTranscript(target, text) {
     if (price !== null) document.getElementById('formPrice').value = price;
   } else if (target === 'search') {
     document.getElementById('searchTextBox').value = text.trim();
+  } else if (target === 'calc') {
+    applyCalcVoice(text);
+  } else if (target === 'change') {
+    applyChangeVoice(text);
   }
 }
 
@@ -1000,14 +1115,20 @@ function startListening(target) {
   sessionFinalText = '';
   isHolding = true;
 
-  continueEl = isTextEditable(document.activeElement) ? document.activeElement : continueFallbackEl(target);
-  continueBaseValue = continueEl.value;
-  try {
-    continueSelStart = continueEl.selectionStart != null ? continueEl.selectionStart : continueEl.value.length;
-    continueSelEnd = continueEl.selectionEnd != null ? continueEl.selectionEnd : continueEl.value.length;
-  } catch (e) {
-    continueSelStart = continueEl.value.length;
-    continueSelEnd = continueEl.value.length;
+  if (target === 'calc' || target === 'change') {
+    // Calculator voice has no "Continue" dictation; it only fills its own fields.
+    continueEl = null;
+    if (target === 'change') changeSnapshot = { total: changeTotalEl.value, cash: changeCashEl.value };
+  } else {
+    continueEl = isTextEditable(document.activeElement) ? document.activeElement : continueFallbackEl(target);
+    continueBaseValue = continueEl.value;
+    try {
+      continueSelStart = continueEl.selectionStart != null ? continueEl.selectionStart : continueEl.value.length;
+      continueSelEnd = continueEl.selectionEnd != null ? continueEl.selectionEnd : continueEl.value.length;
+    } catch (e) {
+      continueSelStart = continueEl.value.length;
+      continueSelEnd = continueEl.value.length;
+    }
   }
 
   try { rec.start(); } catch (e) { /* already running */ }
@@ -1015,6 +1136,10 @@ function startListening(target) {
     voiceTalkBtnEl.innerHTML = '🎙️ Listening…';
   } else if (target === 'manual') {
     document.getElementById('formListeningStatus').hidden = false;
+  } else if (target === 'calc') {
+    document.getElementById('calcListeningStatus').hidden = false;
+  } else if (target === 'change') {
+    document.getElementById('changeListeningStatus').hidden = false;
   } else {
     document.getElementById('searchListeningStatus').hidden = false;
   }
@@ -1026,6 +1151,10 @@ function stopListening(target) {
     voiceTalkBtnEl.innerHTML = voiceTalkBtnDefaultLabel;
   } else if (target === 'manual') {
     document.getElementById('formListeningStatus').hidden = true;
+  } else if (target === 'calc') {
+    document.getElementById('calcListeningStatus').hidden = true;
+  } else if (target === 'change') {
+    document.getElementById('changeListeningStatus').hidden = true;
   } else {
     document.getElementById('searchListeningStatus').hidden = true;
   }
@@ -1333,6 +1462,7 @@ function renderItems() {
       <div class="item-actions">
         <button class="icon-btn item-menu-btn" data-id="${escapeHtml(item.id)}" aria-label="Item options" aria-expanded="false">⋮</button>
         <div class="item-menu-dropdown" hidden>
+          <button class="addtotal-item-btn" data-id="${escapeHtml(item.id)}">➕ Add to total</button>
           <button class="edit-item-btn" data-id="${escapeHtml(item.id)}">✏️ Edit</button>
           <button class="delete-item-btn" data-id="${escapeHtml(item.id)}">🗑️ Delete</button>
         </div>
@@ -1355,6 +1485,13 @@ function renderItems() {
         btn.classList.add('open');
         btn.setAttribute('aria-expanded', 'true');
       }
+    });
+  });
+  container.querySelectorAll('.addtotal-item-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closeAllItemMenus();
+      const item = allItems.find(i => i.id === btn.dataset.id);
+      if (item) addItemToChangeTotal(item);
     });
   });
   container.querySelectorAll('.edit-item-btn').forEach(btn => {
@@ -1498,6 +1635,284 @@ document.getElementById('settingsSaveBtn').addEventListener('click', async () =>
     } catch (e) { /* toast already shown */ }
   });
 });
+
+/* ============================================================
+   STORE CALCULATOR — free calculator (voice + keypad) and
+   customer-change mode. Voice reuses the hold-to-talk engine above.
+   ============================================================ */
+const calcModal = document.getElementById('calcModal');
+const calcExprEl = document.getElementById('calcExpr');
+const calcResultEl = document.getElementById('calcResult');
+const changeTotalEl = document.getElementById('changeTotal');
+const changeCashEl = document.getElementById('changeCash');
+let calcExpr = '';          // internal form uses ASCII ops: + - * /
+let calcLast = null;        // last answer, so you can keep calculating from it
+let calcJustAnswered = false;
+let calcMode = 'calc';
+let changeSnapshot = { total: '', cash: '' };
+
+/* CALC-PURE-START */
+const NUM_TOKEN = /^\d*\.?\d+$/;
+const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+
+function parseAmount(str) {
+  const n = parseFloat(String(str).replace(/,/g, ''));
+  return isFinite(n) ? n : NaN;
+}
+
+// Turns what was said into tokens: numbers ("135"), operators (+ - * /)
+// and markers (@T = total/amount words, @C = cash/paid words).
+// Handles digits ("100-35"), words ("one hundred minus thirty five"),
+// and a few Tagalog words (bawas, dagdag, bayad).
+function speechTokens(text) {
+  let s = ' ' + String(text).toLowerCase() + ' ';
+  s = s.replace(/(\d),(?=\d{3}\b)/g, '$1').replace(/[₱$,]/g, ' ');
+  s = s.replace(/\.(?=\s)/g, ' ');
+  s = s.replace(/[−–—]/g, '-');
+  s = s.replace(/\b(pesos?|piso|php)\b/g, ' ');
+  s = s.replace(/\b(total|due|amount|bill|presyo|halaga|kabuuan)\b/g, ' @T ')
+       .replace(/\b(cash|paid|pay|payment|received|receive|bayad|binayad|nagbayad|tendered|tender|given|gave|bigay|binigay)\b/g, ' @C ');
+  s = s.replace(/\b(multiplied by|multiply by|multiplied|multiply|times)\b/g, ' * ')
+       .replace(/\b(divided by|divide by|divided|divide|over)\b/g, ' / ')
+       .replace(/\b(added to|add|plus|dagdag|dagdagan)\b/g, ' + ')
+       .replace(/\b(minus|less|subtract|take away|bawas|bawasan)\b/g, ' - ');
+  s = s.replace(/[×✕]/g, ' * ').replace(/\bx\b/g, ' * ').replace(/÷/g, ' / ');
+  s = s.replace(/\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)-(one|two|three|four|five|six|seven|eight|nine)\b/g, '$1 $2');
+  s = s.replace(/([+\-*/])/g, ' $1 ');
+
+  const out = [];
+  let run = [];
+  const flush = () => {
+    if (run.length) {
+      const n = wordsToNumber(run.join(' '));
+      if (n !== null) out.push(n);
+      run = [];
+    }
+  };
+  for (const tok of s.split(/\s+/).filter(Boolean)) {
+    if (/^[+\-*/]$/.test(tok) || tok === '@T' || tok === '@C') { flush(); out.push(tok); }
+    else if (NUM_TOKEN.test(tok)) { flush(); out.push(tok); }
+    else if (hasOwn(NUMBER_WORDS, tok) || hasOwn(SCALE_WORDS, tok) || tok === 'point' || tok === 'decimal' || tok === 'and') run.push(tok);
+    else flush();
+  }
+  flush();
+  return out;
+}
+
+// Small safe evaluator (no eval). Returns a number, or null if invalid.
+function evalExpression(src) {
+  if (/[\d.]\s+[\d.]/.test(String(src))) return null;   // "100 35": an operator is missing
+  const clean = String(src).replace(/\s+/g, '');
+  const tokens = clean.match(/\d*\.?\d+|[+\-*/()]/g);
+  if (!tokens || tokens.join('') !== clean) return null;
+  let i = 0;
+  function parseExpr() {
+    let v = parseTerm();
+    while (v !== null && (tokens[i] === '+' || tokens[i] === '-')) {
+      const op = tokens[i++]; const r = parseTerm();
+      if (r === null) return null;
+      v = op === '+' ? v + r : v - r;
+    }
+    return v;
+  }
+  function parseTerm() {
+    let v = parseFactor();
+    while (v !== null && (tokens[i] === '*' || tokens[i] === '/')) {
+      const op = tokens[i++]; const r = parseFactor();
+      if (r === null) return null;
+      v = op === '*' ? v * r : v / r;
+    }
+    return v;
+  }
+  function parseFactor() {
+    const t = tokens[i];
+    if (t === undefined) return null;
+    if (t === '-') { i++; const f = parseFactor(); return f === null ? null : -f; }
+    if (t === '+') { i++; return parseFactor(); }
+    if (t === '(') { i++; const v = parseExpr(); if (v === null || tokens[i] !== ')') return null; i++; return v; }
+    if (NUM_TOKEN.test(t)) { i++; return parseFloat(t); }
+    return null;
+  }
+  const result = parseExpr();
+  return (result === null || i !== tokens.length) ? null : result;
+}
+
+function tokensToExpression(tokens) {
+  let expr = '', prevNum = false;
+  for (const t of tokens) {
+    if (t.startsWith('@')) continue;
+    const isNum = /^[\d.]/.test(t);
+    if (isNum && prevNum) expr += ' ';   // two numbers with no operator → stays invalid, user sees it
+    expr += t;
+    prevNum = isNum;
+  }
+  return expr;
+}
+
+// Decides which number is the total and which is the cash. "total 35 cash 100",
+// "bayad 100", "35 100" all work. `base` = field values from before the hold.
+function parseChangeSpeech(text, base) {
+  let key = null, total = null, cash = null;
+  const loose = [];
+  for (const t of speechTokens(text)) {
+    if (t === '@T') key = 'T';
+    else if (t === '@C') key = 'C';
+    else if (NUM_TOKEN.test(t)) {
+      if (key === 'T' && total === null) total = t;
+      else if (key === 'C' && cash === null) cash = t;
+      else loose.push(t);
+      key = null;
+    }
+  }
+  const baseHasTotal = parseAmount(base.total) > 0;
+  for (const n of loose) {
+    if (total === null && !baseHasTotal) total = n;
+    else if (cash === null) cash = n;
+  }
+  return { total, cash };
+}
+/* CALC-PURE-END */
+
+/* ---------- Free calculator ---------- */
+function fmtCalcNumber(v) {
+  if (Math.abs(v) < 0.005) v = 0;
+  return v.toLocaleString('en-PH', { maximumFractionDigits: 2 });
+}
+function renderCalc() {
+  calcExprEl.textContent = calcExpr
+    ? calcExpr.replace(/([+\-*/])/g, ' $1 ').replace(/\*/g, '×').replace(/\//g, '÷').replace(/-/g, '−').replace(/\s+/g, ' ').trim()
+    : '0';
+}
+function calcClear() {
+  calcExpr = ''; calcLast = null; calcJustAnswered = false;
+  calcResultEl.textContent = ''; calcResultEl.classList.remove('err');
+  renderCalc();
+}
+function calcAnswer() {
+  if (!calcExpr) return;
+  const v = evalExpression(calcExpr.replace(/\.$/, ''));
+  calcResultEl.classList.remove('err');
+  if (v === null) { calcResultEl.textContent = 'Check the entry'; calcResultEl.classList.add('err'); return; }
+  if (!isFinite(v)) { calcResultEl.textContent = "Can't divide by 0"; calcResultEl.classList.add('err'); return; }
+  calcLast = v;
+  calcJustAnswered = true;
+  calcResultEl.textContent = fmtCalcNumber(v);
+}
+function calcPress(key) {
+  const isOp = (ch) => '+-*/'.includes(ch);
+  if (key === 'C') { calcClear(); return; }
+  if (key === '=') { calcAnswer(); return; }
+  if (key === 'back') {
+    if (calcJustAnswered) { calcClear(); return; }
+    calcExpr = calcExpr.slice(0, -1);
+    calcResultEl.textContent = ''; calcResultEl.classList.remove('err');
+    renderCalc(); return;
+  }
+  if (isOp(key)) {
+    if (calcJustAnswered && calcLast !== null) {
+      calcExpr = calcLast.toFixed(8).replace(/\.?0+$/, '');   // keep going from the answer
+    }
+    calcJustAnswered = false;
+    calcResultEl.textContent = ''; calcResultEl.classList.remove('err');
+    calcExpr = calcExpr.replace(/\.$/, '');
+    if (!calcExpr) { if (key === '-') calcExpr = '-'; renderCalc(); return; }
+    if (isOp(calcExpr.slice(-1))) {
+      if (calcExpr.length === 1) return;                      // lone minus sign
+      calcExpr = calcExpr.slice(0, -1) + key;                 // swap the operator
+    } else {
+      calcExpr += key;
+    }
+    renderCalc(); return;
+  }
+  // digit or dot
+  if (calcJustAnswered) { calcExpr = ''; calcJustAnswered = false; calcResultEl.textContent = ''; }
+  if (key === '.') {
+    const seg = calcExpr.split(/[+\-*/]/).pop();
+    if (seg.includes('.')) return;
+    if (seg === '') calcExpr += '0';
+  }
+  calcExpr += key;
+  renderCalc();
+}
+function applyCalcVoice(text) {
+  const expr = tokensToExpression(speechTokens(text));
+  if (!expr) return;
+  calcExpr = expr;
+  calcJustAnswered = false;
+  calcResultEl.textContent = ''; calcResultEl.classList.remove('err');
+  renderCalc();
+}
+
+/* ---------- Customer change ---------- */
+function updateChange() {
+  const total = parseAmount(changeTotalEl.value);
+  const cash = parseAmount(changeCashEl.value);
+  const box = document.getElementById('changeOutput');
+  const label = document.getElementById('changeLabel');
+  const amt = document.getElementById('changeAmount');
+  box.classList.remove('ok', 'short');
+  label.textContent = 'Change';
+  if (isNaN(total) || isNaN(cash)) { amt.textContent = '₱0.00'; return; }
+  const diffCents = Math.round(cash * 100) - Math.round(total * 100);
+  if (diffCents >= 0) { box.classList.add('ok'); }
+  else { box.classList.add('short'); label.textContent = 'Still short'; }
+  amt.textContent = '₱' + formatPrice(Math.abs(diffCents) / 100);
+}
+function applyChangeVoice(text) {
+  const { total, cash } = parseChangeSpeech(text, changeSnapshot);
+  if (total !== null) changeTotalEl.value = total;
+  if (cash !== null) changeCashEl.value = cash;
+  updateChange();
+}
+function addItemToChangeTotal(item) {
+  const price = parseAmount(item.price);
+  if (isNaN(price)) { toast('This item has no price.', true); return; }
+  const cur = parseAmount(changeTotalEl.value);
+  const next = Math.round(((isNaN(cur) ? 0 : cur) + price) * 100) / 100;
+  changeTotalEl.value = String(next);
+  updateChange();
+  toast(`+₱${formatPrice(price)} → Total ₱${formatPrice(next)}`);
+}
+
+/* ---------- Wiring ---------- */
+function setCalcMode(mode) {
+  calcMode = mode;
+  document.getElementById('calcPanel').hidden = mode !== 'calc';
+  document.getElementById('changePanel').hidden = mode !== 'change';
+  document.querySelectorAll('.calc-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+}
+document.getElementById('calcBtn').addEventListener('click', () => {
+  calcModal.hidden = false;
+  // Items were added to the total → open straight on the Change screen.
+  setCalcMode(parseAmount(changeTotalEl.value) > 0 ? 'change' : calcMode);
+});
+document.getElementById('calcCloseBtn').addEventListener('click', () => { calcModal.hidden = true; });
+document.querySelectorAll('.calc-mode-btn').forEach(b => b.addEventListener('click', () => setCalcMode(b.dataset.mode)));
+document.getElementById('calcKeys').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-key]');
+  if (b) calcPress(b.dataset.key);
+});
+changeTotalEl.addEventListener('input', updateChange);
+changeCashEl.addEventListener('input', updateChange);
+document.getElementById('quickCash').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-cash]');
+  if (!b) return;
+  if (b.dataset.cash === 'exact') {
+    const total = parseAmount(changeTotalEl.value);
+    if (isNaN(total)) { toast('Enter the total first.', true); return; }
+    changeCashEl.value = String(total);
+  } else {
+    changeCashEl.value = b.dataset.cash;
+  }
+  updateChange();
+});
+document.getElementById('changeClearBtn').addEventListener('click', () => {
+  changeTotalEl.value = ''; changeCashEl.value = ''; updateChange();
+});
+wireHoldToTalk('calcTalkBtn', 'calc');
+wireHoldToTalk('changeTalkBtn', 'change');
+renderCalc();
+updateChange();
 
 /* ---------- Init ---------- */
 loadSettings();
